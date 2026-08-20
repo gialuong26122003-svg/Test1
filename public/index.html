@@ -714,7 +714,6 @@
           <p>Mô hình giờ-theo-giờ (AOI/IAM) · thiết kế chuỗi · loss diagram · ageing · P50/P90</p>
         </div>
       </div>
-      <div class="badge" id="engineBadge">ENGINE: —</div>
     </div>
 
     <div class="layout">
@@ -724,7 +723,8 @@
           <div class="section-title"><span class="step-num">1</span>Vị trí dự án</div>
           <div class="field"><label>Tên dự án</label><input id="projName" value="Dự án PV mẫu" type="text"></div>
           <div class="row2">
-            <div class="field"><label>Vĩ độ</label><input id="lat" type="number" step="0.0001" value="20.9533"></div>
+            <div class="field"><label>Vĩ độ</label><input id="lat" type="number" step="0.0001" value="20.9533"
+                oninput="renderFarmRowDiagram()"></div>
             <div class="field"><label>Kinh độ</label><input id="lon" type="number" step="0.0001" value="105.8170"></div>
           </div>
         </div>
@@ -760,16 +760,25 @@
           <div class="field"><label>Albedo (suất phản xạ mặt đất)</label><input id="albedo" type="number" step="0.01"
               value="0.20"></div>
           <div class="field">
-            <label>Số hướng mái</label>
-            <select id="roofMode" onchange="toggleRoof2(); renderRoofDiagram();">
-              <option value="1">1 hướng (mái đơn)</option>
-              <option value="2" selected>2 hướng (mái đôi / dome)</option>
+            <label>Phương thức lắp đặt</label>
+            <select id="mountMode" onchange="toggleMountMode(); renderRoofDiagram(); renderFarmRowDiagram();">
+              <option value="roof" selected>Mái tôn (rooftop)</option>
+              <option value="farm">Mặt đất — hệ farm (khung giàn)</option>
             </select>
+          </div>
+          <div id="roofOnlyBlock">
+            <div class="field">
+              <label>Số hướng mái</label>
+              <select id="roofMode" onchange="toggleRoof2(); renderRoofDiagram();">
+                <option value="1">1 hướng (mái đơn)</option>
+                <option value="2" selected>2 hướng (mái đôi / dome)</option>
+              </select>
+            </div>
           </div>
           <div class="field"><label id="face1Label">Góc nghiêng &amp; hướng mái 1</label></div>
           <div class="row2">
             <div class="field"><label>Góc nghiêng (°)</label><input id="tilt" type="number" step="1" value="10"
-                oninput="renderRoofDiagram()"></div>
+                oninput="renderRoofDiagram(); renderFarmRowDiagram();"></div>
             <div class="field"><label>Hướng (° la bàn, 180=Nam)</label><input id="azimuth" type="number" step="1"
                 value="270" oninput="renderRoofDiagram()"></div>
           </div>
@@ -787,6 +796,28 @@
           <div class="field">
             <div id="roofDiagramWrap"
               style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:10px;"></div>
+          </div>
+          <div id="farmOnlyBlock" style="display:none;">
+            <div class="subgroup">Hình học hàng &amp; khoảng cách (tự bóng hàng-hàng)</div>
+            <div class="row2">
+              <div class="field"><label>Chiều dài tấm theo phương nghiêng (m)</label><input id="farmModuleLength"
+                  type="number" step="0.001" value="2.384" oninput="renderFarmRowDiagram()"></div>
+              <div class="field"><label>Số tấm xếp theo phương nghiêng/giàn</label><input id="farmPanelsSlope"
+                  type="number" step="1" min="1" value="2" oninput="renderFarmRowDiagram()"></div>
+            </div>
+            <div class="field"><label>Khoảng cách tim-tim giữa các hàng — pitch (m)</label><input id="farmPitch"
+                type="number" step="0.05" value="8.5" oninput="renderFarmRowDiagram()"></div>
+            <div class="field"><label>Hệ số tổn hao nhiệt Uc — giàn thông thoáng tự do (W/m²K)</label><input
+                id="farmUc" type="number" step="1" value="29"></div>
+            <div class="hint" style="margin-bottom:10px;">Giàn mặt đất thoáng khí 2 mặt nên hệ số truyền nhiệt Uc mặc
+              định cao hơn mái tôn (29 so với 20 W/m²K, đúng preset "Free-standing" của PVsyst) → tấm vận hành mát
+              hơn, sản lượng/kWp cao hơn một chút so với cùng điều kiện lắp áp mái. Chỉnh lại nếu có số liệu đo thực
+              tế của kết cấu giàn.</div>
+            <div class="field">
+              <div id="farmRowDiagramWrap"
+                style="background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:10px;">
+              </div>
+            </div>
           </div>
         </div>
 
@@ -866,10 +897,12 @@
                 type="number" step="1" value="66"></div>
           </div>
           <div class="hint" style="margin-bottom:10px; color:#e2604f; font-size:8.5px;">"Dòng vào tối đa/MPPT" là giới
-            hạn vận hành (dùng để tính số chuỗi/tracker) — đây là giới hạn CHÍNH, thường thấp hơn và mang tính ràng buộc
-            hơn "dòng ngắn mạch". "Dòng tối đa/1 đầu vào" kiểm tra Isc của TỪNG chuỗi riêng lẻ (bảo vệ connector/dây
-            từng đầu vào). "Dòng ngắn mạch tối đa/MPPT" là giới hạn an toàn tuyệt đối của phần cứng, ít khi là ràng buộc
-            chặt nhất nhưng vẫn nên kiểm tra.</div>
+            hạn dòng VẬN HÀNH liên tục của MPPT — so với tổng <b>Imp</b> (dòng tại điểm công suất cực đại) của các chuỗi
+            song song, vì đó là dòng thực tế chạy qua khi hệ vận hành bình thường. "Dòng ngắn mạch tối đa/MPPT" là giới
+            hạn an toàn tuyệt đối của phần cứng khi có sự cố — so với tổng <b>Isc</b> (dòng ngắn mạch) của các chuỗi,
+            vì đó là dòng tối đa có thể xảy ra khi có lỗi/chập. Hai giới hạn dùng hai loại dòng khác nhau nên số chuỗi
+            tối đa/tracker được tính riêng theo từng cái rồi lấy giá trị nhỏ nhất. "Dòng tối đa/1 đầu vào" kiểm tra Isc
+            của TỪNG chuỗi riêng lẻ (bảo vệ connector/dây từng đầu vào, vì đó là dòng tối đa 1 chuỗi có thể tạo ra).</div>
         </div>
 
         <div class="side-section">
@@ -1006,13 +1039,21 @@
         }
         window.print();
       }
-      function setEngineBadge(txt) { document.getElementById('engineBadge').textContent = 'ENGINE: ' + txt; }
       function toggleRoof2() {
-        const two = document.getElementById('roofMode').value === '2';
+        const isFarm = document.getElementById('mountMode').value === 'farm';
+        const two = !isFarm && document.getElementById('roofMode').value === '2';
         document.getElementById('roof2Block').style.display = two ? 'block' : 'none';
         document.getElementById('mixedOrientBlock').style.display = two ? 'block' : 'none';
-        document.getElementById('face1Label').textContent = two ? 'Góc nghiêng & hướng mái 1' : 'Góc nghiêng & hướng mái';
+        document.getElementById('face1Label').textContent = isFarm ? 'Góc nghiêng & hướng giàn' : (two ? 'Góc nghiêng & hướng mái 1' : 'Góc nghiêng & hướng mái');
       }
+      function toggleMountMode() {
+        const isFarm = document.getElementById('mountMode').value === 'farm';
+        document.getElementById('roofOnlyBlock').style.display = isFarm ? 'none' : 'block';
+        document.getElementById('farmOnlyBlock').style.display = isFarm ? 'block' : 'none';
+        if (isFarm) document.getElementById('roofMode').value = '1';
+        toggleRoof2();
+      }
+      toggleMountMode();
       toggleRoof2();
 
       // ============================================================
@@ -1099,6 +1140,70 @@
       renderRoofDiagram();
 
       // ============================================================
+      // FARM (GROUND-MOUNT RACKING) ROW-SPACING DIAGRAM — live GCR / row-to-row
+      // self-shading preview. Uses the same "shading limit (profile) angle"
+      // formula (Duffie & Beckman) that the physics engine applies hour-by-hour
+      // during the real calculation — see rowShadeFraction() below.
+      // ============================================================
+      function renderFarmRowDiagram() {
+        const wrap = document.getElementById('farmRowDiagramWrap');
+        if (!wrap) return;
+        const lat = parseFloat(document.getElementById('lat').value) || 21;
+        const tiltDeg = Math.max(0.01, parseFloat(document.getElementById('tilt').value) || 0.01);
+        const moduleLength = parseFloat(document.getElementById('farmModuleLength').value) || 0;
+        const panelsSlope = Math.max(1, parseFloat(document.getElementById('farmPanelsSlope').value) || 1);
+        const pitch = parseFloat(document.getElementById('farmPitch').value) || 0;
+        const Lc = moduleLength * panelsSlope;
+        const beta = tiltDeg * Math.PI / 180;
+        const GCR = pitch > 0 ? (Lc / pitch) * 100 : 0;
+        const limitAngleDeg = Math.atan2(Lc * Math.sin(beta), pitch - Lc * Math.cos(beta)) * 180 / Math.PI;
+        // Solar elevation at true solar noon on the winter solstice (Dec 21, declination -23.45°),
+        // for a due-south-facing array (Δγ=0 at solar noon, so profile angle = elevation angle there):
+        // elevation_noon = 90° − |lat − decl| = 90° − |lat + 23.45°| for northern-hemisphere latitudes.
+        const noonElevWinterDeg = Math.max(1, 90 - Math.abs(lat + 23.45));
+        const elevRad = noonElevWinterDeg * Math.PI / 180;
+        const suggestedPitch = Lc * Math.cos(beta) + Lc * Math.sin(beta) / Math.tan(elevRad);
+
+        const groundY = 85, scale = 9; // px per meter, side-profile geometry
+        const baseA = { x: 20, y: groundY };
+        const peakA = { x: baseA.x + Lc * scale * Math.cos(beta), y: groundY - Lc * scale * Math.sin(beta) };
+        const baseB = { x: baseA.x + pitch * scale, y: groundY };
+        const peakB = { x: baseB.x + Lc * scale * Math.cos(beta), y: groundY - Lc * scale * Math.sin(beta) };
+        // shading ray from the tip of row A, arriving at the limit angle — by construction it grazes baseB
+        const rayLen = Math.max(0, baseB.x - peakA.x) / Math.cos(limitAngleDeg * Math.PI / 180) * 1.15 + 20;
+        const rayEnd = { x: peakA.x + rayLen * Math.cos(limitAngleDeg * Math.PI / 180), y: peakA.y - rayLen * Math.sin(limitAngleDeg * Math.PI / 180) };
+        const viewW = Math.max(260, baseB.x + Lc * scale + 30);
+
+        wrap.innerHTML = `
+    <div style="font-size:10px; color:var(--text-dim); letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px;">Hình học hàng — mặt cắt vuông góc dãy</div>
+    <svg viewBox="0 0 ${viewW} 100" style="width:100%; height:auto;">
+      <line x1="5" y1="${groundY}" x2="${viewW - 5}" y2="${groundY}" stroke="#3a4a5f" stroke-width="1.5"/>
+      <line x1="${baseA.x}" y1="${baseA.y}" x2="${peakA.x}" y2="${peakA.y}" stroke="#f2a93b" stroke-width="4" stroke-linecap="round"/>
+      <line x1="${baseB.x}" y1="${baseB.y}" x2="${peakB.x}" y2="${peakB.y}" stroke="#35c2c1" stroke-width="4" stroke-linecap="round"/>
+      <line x1="${peakA.x}" y1="${peakA.y}" x2="${rayEnd.x}" y2="${rayEnd.y}" stroke="#e2604f" stroke-width="1.3" stroke-dasharray="4,3"/>
+      <line x1="${baseA.x}" y1="${groundY + 8}" x2="${baseB.x}" y2="${groundY + 8}" stroke="#8fa1b3" stroke-width="1"/>
+      <text x="${(baseA.x + baseB.x) / 2 - 12}" y="${groundY + 19}" fill="#8fa1b3" font-size="9.5" font-family="monospace">pitch ${pitch ? pitch.toFixed(2) : '—'}m</text>
+      <text x="${baseA.x - 4}" y="${groundY + 32}" fill="#8fa1b3" font-size="9">Hàng 1</text>
+      <text x="${baseB.x - 4}" y="${groundY + 32}" fill="#8fa1b3" font-size="9">Hàng 2</text>
+      <text x="${peakA.x + 3}" y="${peakA.y - 4}" fill="#e2604f" font-size="9" font-family="monospace">giới hạn ${isFinite(limitAngleDeg) ? limitAngleDeg.toFixed(1) : '—'}°</text>
+    </svg>
+    <table style="width:100%; font-family:var(--mono); font-size:11px; margin-top:6px; border-collapse:collapse;">
+      <tr><td style="color:var(--text-dim); padding:2px 0;">Chiều rộng giàn theo mặt nghiêng (Lc)</td><td style="text-align:right;">${Lc.toFixed(2)} m</td></tr>
+      <tr><td style="color:var(--text-dim); padding:2px 0;">GCR (Lc / pitch)</td><td style="text-align:right;">${GCR.toFixed(1)}%</td></tr>
+      <tr><td style="color:var(--text-dim); padding:2px 0;">Góc giới hạn che bóng (profile angle)</td><td style="text-align:right;">${isFinite(limitAngleDeg) ? limitAngleDeg.toFixed(1) : '—'}°</td></tr>
+      <tr><td style="color:var(--text-dim); padding:2px 0;">Pitch gợi ý — hết che lúc 12h trưa đông chí (21/12)</td><td style="text-align:right;">${suggestedPitch.toFixed(2)} m</td></tr>
+    </table>
+    <div class="hint">Góc giới hạn che bóng là góc nâng mặt trời (đo trong mặt phẳng vuông góc với hàng) mà dưới
+      ngưỡng đó hàng phía sau bắt đầu bị che một phần bởi hàng phía trước. Pitch gợi ý tính cho giàn hướng chính
+      Nam đúng thời điểm mặt trời qua kinh tuyến (12h trưa mặt trời, không phải 12h đồng hồ) ngày đông chí — ngày
+      có góc nâng mặt trời buổi trưa thấp nhất trong năm ở Bắc bán cầu; đây là mốc thiết kế phổ biến cho farm.
+      Công cụ tính tổn hao tự bóng ĐẦY ĐỦ theo từng giờ, từng tháng (kể cả khi giàn lệch hướng Nam) khi bấm
+      "Tính toán" — số liệu trên chỉ là ước lượng nhanh để chọn pitch.</div>
+  `;
+      }
+      renderFarmRowDiagram();
+
+      // ============================================================
       // DEVICE DATABASE — every value below is transcribed directly from the
       // manufacturer datasheets provided (STC electrical data). Each power bin of
       // a multi-wattage module line (e.g. Trina 645–670W, 740–760W) is listed as
@@ -1121,6 +1226,9 @@
         { id: 'trina21c-750', label: 'Trina TSM-NEG21C.20Q — 750W', model: 'Trina Solar TSM-NEG21C.20Q 750W', power: 750, voc: 50.50, vmp: 42.50, isc: 18.77, imp: 17.66, tcPmax: -0.26, tcVoc: -0.24, bifacial: 85, degYear1: 1, degAnnual: 0.35 },
         { id: 'trina21c-755', label: 'Trina TSM-NEG21C.20Q — 755W', model: 'Trina Solar TSM-NEG21C.20Q 755W', power: 755, voc: 50.70, vmp: 42.70, isc: 18.81, imp: 17.69, tcPmax: -0.26, tcVoc: -0.24, bifacial: 85, degYear1: 1, degAnnual: 0.35 },
         { id: 'trina21c-760', label: 'Trina TSM-NEG21C.20Q — 760W', model: 'Trina Solar TSM-NEG21C.20Q 760W', power: 760, voc: 50.90, vmp: 42.90, isc: 18.85, imp: 17.72, tcPmax: -0.26, tcVoc: -0.24, bifacial: 85, degYear1: 1, degAnnual: 0.35 },
+        // LONGi Hi-MO X10 Scientist, LR7-72HVH, 650M (datasheet BGV03 20260509, N-type HPBC 2.0)
+        // Monofacial (single-glass) — no bifacial rear-side gain. Warranty: 1% year-1 degradation, 0.35%/year thereafter.
+        { id: 'longi-lr7-72hvh-650', label: 'LONGi LR7-72HVH — 650W', model: 'LONGi Solar LR7-72HVH-650M', power: 650, voc: 53.90, vmp: 44.56, isc: 15.29, imp: 14.59, tcPmax: -0.26, tcVoc: -0.20, degYear1: 1, degAnnual: 0.35 },
       ];
 
       const INVERTER_DB = [
@@ -1189,9 +1297,14 @@
         document.getElementById('tempCoeff').value = m.tcPmax;
         document.getElementById('tempCoeffVoc').value = m.tcVoc;
         let notes = [];
+        // Always clear bifacial gain on module change — it's mounting/albedo-dependent and must
+        // never silently carry over from a previously selected module (e.g. switching from a
+        // bifacial panel to this monofacial one must not leave a stale rear-side gain applied).
+        document.getElementById('bifacialGain').value = 0;
         if (m.bifacial !== undefined) {
-          document.getElementById('bifacialGain').value = 0; // don't assume a gain % — mounting/albedo-dependent; just flag it's bifacial
           notes.push('tấm bifacial (hệ số 2 mặt ' + m.bifacial + '±5% theo datasheet) — tự chọn % tăng công suất mặt sau phù hợp điều kiện lắp đặt thực tế, mặc định để 0');
+        } else {
+          notes.push('tấm monofacial (1 mặt) — không áp dụng bifacial gain');
         }
         if (m.degYear1 !== undefined && m.degAnnual !== undefined) {
           document.getElementById('degYear1').value = m.degYear1;
@@ -1271,7 +1384,33 @@
       }
       // Full hourly AOI simulation for one face/month: returns POA before IAM, POA after IAM,
       // and the energy-weighted average cell-temperature derating factor for that month.
-      function simulateFaceMonth(ghiDay, tAmbDay, tiltDeg, azimuthCompass, latDeg, albedo, Uc, tempCoeffPct, monthIdx) {
+      // Row-to-row mutual shading fraction for fixed-tilt ground-mount racking (rows running
+      // perpendicular to the array's azimuth-tilt plane — the standard farm layout). Classic
+      // Duffie & Beckman "shaded fraction of a collector row" result: converts sun position
+      // (via the hour angle w, zenith cosine, declination, latitude) into the profile angle in
+      // the plane perpendicular to the rows, compares it to the geometric shading-limit angle
+      // set by row pitch D and collector slant height Lc, and returns the fraction (0-1) of the
+      // row's slant height that lies in shadow from the row in front of it.
+      function rowShadeFraction(w, cosThetaZ, phi, decl, gammaRad, beta, Lc, D) {
+        const sinAlpha = Math.max(0, Math.min(1, cosThetaZ)); // cosThetaZ = cos(zenith) = sin(solar elevation)
+        const cosAlpha = Math.sqrt(Math.max(0, 1 - sinAlpha * sinAlpha));
+        const cosPhi = Math.cos(phi);
+        if (cosAlpha < 1e-9 || Math.abs(cosPhi) < 1e-9) return 0;
+        let cosGammaS = (sinAlpha * Math.sin(phi) - Math.sin(decl)) / (cosAlpha * cosPhi);
+        cosGammaS = Math.max(-1, Math.min(1, cosGammaS));
+        const gammaS = (w >= 0 ? 1 : -1) * Math.acos(cosGammaS); // solar azimuth, same south-based convention as gammaRad
+        const cosDeltaGamma = Math.cos(gammaS - gammaRad);
+        if (cosDeltaGamma <= 0.01) return 0; // sun >~89° off the row's facing direction — front-face beam already negligible
+        const tanAlpha = sinAlpha / cosAlpha;
+        const profileAngle = Math.atan(tanAlpha / cosDeltaGamma);
+        if (profileAngle <= 0) return 1;
+        const limitAngle = Math.atan2(Lc * Math.sin(beta), D - Lc * Math.cos(beta));
+        if (profileAngle >= limitAngle) return 0;
+        const s = 1 - (D * Math.sin(profileAngle)) / (Lc * Math.sin(profileAngle + beta));
+        return Math.max(0, Math.min(1, s));
+      }
+
+      function simulateFaceMonth(ghiDay, tAmbDay, tiltDeg, azimuthCompass, latDeg, albedo, Uc, tempCoeffPct, monthIdx, rowShade) {
         const phi = latDeg * Math.PI / 180, beta = tiltDeg * Math.PI / 180;
         let gamma = azimuthCompass - 180; if (gamma > 180) gamma -= 360; if (gamma < -180) gamma += 360;
         const gammaRad = gamma * Math.PI / 180;
@@ -1288,10 +1427,10 @@
           const cosTheta = Math.sin(decl) * Math.sin(phi) * Math.cos(beta) - Math.sin(decl) * Math.cos(phi) * Math.sin(beta) * Math.cos(gammaRad)
             + Math.cos(decl) * Math.cos(w) * Math.cos(phi) * Math.cos(beta) + Math.cos(decl) * Math.cos(w) * Math.sin(phi) * Math.sin(beta) * Math.cos(gammaRad)
             + Math.cos(decl) * Math.sin(w) * Math.sin(beta) * Math.sin(gammaRad);
-          hours.push({ hourIndex: h, cosThetaZ, cosTheta });
+          hours.push({ hourIndex: h, cosThetaZ, cosTheta, w });
         }
         const Wsum = hours.reduce((s, h) => s + h.cosThetaZ, 0) || 1;
-        let sumBeamTilted = 0, sumBeamTiltedIAM = 0, sumEnergyWeightedTempFactor = 0, sumGpoa = 0;
+        let sumBeamTilted = 0, sumBeamTiltedUnshaded = 0, sumBeamTiltedIAM = 0, sumEnergyWeightedTempFactor = 0, sumGpoa = 0;
         // Per-hour-of-day (0-23) effective (IAM-corrected, temperature-derated) POA in Wh/m2 —
         // beam part filled here; diffuse+ground IAM (day-level constants) added on after the loop.
         // This feeds the clipping calculation downstream.
@@ -1301,7 +1440,16 @@
           const Beam_h = GHI_h * (1 - fd), Diffuse_h = GHI_h * fd;
           const cosThetaClamped = Math.max(h.cosTheta, 0);
           const Rb_h = cosThetaClamped / h.cosThetaZ;
-          const Beam_tilted_h = Beam_h * Rb_h;
+          const Beam_tilted_h_unshaded = Beam_h * Rb_h;
+          sumBeamTiltedUnshaded += Beam_tilted_h_unshaded;
+          // Row-to-row self-shading (farm/ground-mount only — reduces the DIRECT beam reaching the
+          // shaded portion of the row; diffuse and albedo terms are left untouched, matching the
+          // standard "linear shading on beam only" simplification used for irradiance-level losses).
+          let shadeFrac = 0;
+          if (rowShade && Beam_tilted_h_unshaded > 0) {
+            shadeFrac = rowShadeFraction(h.w, h.cosThetaZ, phi, decl, gammaRad, beta, rowShade.Lc, rowShade.D);
+          }
+          const Beam_tilted_h = Beam_tilted_h_unshaded * (1 - shadeFrac);
           sumBeamTilted += Beam_tilted_h;
           let beamIAM_h = 0;
           if (cosThetaClamped > 0) {
@@ -1316,7 +1464,7 @@
           sumGpoa += G_poa_h;
           hourProfile[h.hourIndex] = { beamIAMWh: Beam_tilted_h * beamIAM_h, diffuseWh: Diffuse_h, groundGHIWh: GHI_h, tempFactor };
         }
-        const Hb_tilted = sumBeamTilted / 1000, Hb_tilted_IAM = sumBeamTiltedIAM / 1000;
+        const Hb_tilted = sumBeamTilted / 1000, Hb_tilted_IAM = sumBeamTiltedIAM / 1000, Hb_tilted_unshaded = sumBeamTiltedUnshaded / 1000;
         const Hd_tilted = (fd * ghiDay) * (1 + Math.cos(beta)) / 2;
         const thetaD = 59.68 - 0.1388 * tiltDeg + 0.001497 * tiltDeg * tiltDeg;
         const iamDiffuse = interpIAM(thetaD);
@@ -1326,6 +1474,7 @@
         const iamGround = interpIAM(thetaG);
         const Hg_tilted_IAM = Hg_tilted * iamGround;
         const POA = Hb_tilted + Hd_tilted + Hg_tilted;
+        const POA_noShade = Hb_tilted_unshaded + Hd_tilted + Hg_tilted;
         const POA_eff = Hb_tilted_IAM + Hd_tilted_IAM + Hg_tilted_IAM;
         const avgTempFactor = sumGpoa > 0 ? sumEnergyWeightedTempFactor / sumGpoa : 1;
 
@@ -1341,19 +1490,27 @@
           const gPoaEff_h = rec.beamIAMWh + diffusePart + groundPart;
           hourlyEff[h] = gPoaEff_h * rec.tempFactor;
         }
-        return { POA, POA_eff, avgTempFactor, hourlyEff };
+        return { POA, POA_noShade, POA_eff, avgTempFactor, hourlyEff };
       }
 
       async function fetchClimateData(lat, lon, startYear, endYear) {
         const params = new URLSearchParams({ lat, lon });
         if (startYear) params.set('startyear', startYear);
         if (endYear) params.set('endyear', endYear);
-        const res = await fetch(`/api/solar/monthly?${params.toString()}`);
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || `Lỗi kết nối Backend (HTTP ${res.status})`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s timeout for frontend
+        try {
+          const res = await fetch(`/api/solar/monthly?${params.toString()}`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Lỗi kết nối Backend (HTTP ${res.status})`);
+          }
+          return await res.json();
+        } catch (e) {
+          clearTimeout(timeoutId);
+          throw e;
         }
-        return await res.json();
       }
 
       // Tracks whether confirmClimateData() has ever succeeded — runCalculation() warns via
@@ -1372,7 +1529,7 @@
         if (isNaN(startYear) || isNaN(endYear) || startYear > endYear) {
           setStatus('Năm bắt đầu phải nhỏ hơn hoặc bằng Năm kết thúc.', 'err'); return;
         }
-        setStatus('Đang lấy dữ liệu bức xạ/nhiệt độ từ PVGIS…');
+        setStatus('⏳ Đang lấy dữ liệu bức xạ/nhiệt độ từ PVGIS (có thể mất 10-30 giây)…');
         try {
           const result = await fetchClimateData(lat, lon, startYear, endYear);
           const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -1380,10 +1537,10 @@
           document.getElementById('manualGHI').value = monthlyTotals.join(' ');
           document.getElementById('manualTemp').value = result.data.tempArr.map(v => v.toFixed(2)).join(' ');
           const yearsLabel = startYear === endYear ? `năm ${startYear}` : `trung bình ${endYear - startYear + 1} năm (${startYear}–${endYear})`;
-          setStatus(`Đã lấy dữ liệu ${yearsLabel} từ ${result.source}.`, 'ok');
+          setStatus(`✓ Đã lấy dữ liệu ${yearsLabel} từ ${result.source}.`, 'ok');
           climateDataFetched = true;
         } catch (e) {
-          setStatus('Không lấy được dữ liệu từ PVGIS — ' + (e.message || String(e)), 'err');
+          setStatus('❌ Không lấy được dữ liệu — ' + (e.message || String(e)) + '. Hãy thử lại hoặc nhập dữ liệu thủ công.', 'err');
         }
       }
 
@@ -1466,6 +1623,7 @@
         const Voc = parseFloat(document.getElementById('moduleVoc').value);
         const Vmp = parseFloat(document.getElementById('moduleVmp').value);
         const Isc = parseFloat(document.getElementById('moduleIsc').value);
+        const Imp = parseFloat(document.getElementById('moduleImp').value);
         const tcVoc = parseFloat(document.getElementById('tempCoeffVoc').value);
         const tcPmax = parseFloat(document.getElementById('tempCoeff').value);
         const tMin = parseFloat(document.getElementById('tMinDesign').value);
@@ -1485,9 +1643,17 @@
         const rawGroups = readStringGroups();
         const numGroups = rawGroups.length;
 
-        // three independent current constraints per tracker (unchanged): operating limit,
-        // per-input/per-connector limit, and the hardware short-circuit ceiling.
-        const maxStringsPerTrackerByOperating = Math.floor(maxCurrentPerMppt / Isc);
+        // Three independent current constraints per tracker, each checked against the current metric
+        // that actually applies to it — the binding one is whichever gives the smallest string count:
+        //  - "Max Current per MPPT" is the CONTINUOUS/OPERATING rating of the MPPT's electronics —
+        //    checked against Imp (the current that actually flows during normal operation).
+        //  - "Max Short-circuit Current per MPPT" is the hardware's absolute non-destructive ceiling
+        //    for a fault condition — checked against Isc (the worst-case current a string can ever
+        //    produce). These two ratings exist as separate datasheet numbers precisely because they
+        //    protect against two different scenarios with two different currents — comparing both
+        //    against Isc would make the short-circuit rating redundant (operating always binds first
+        //    since it's numerically lower), which real datasheets wouldn't bother publishing separately.
+        const maxStringsPerTrackerByOperating = Math.floor(maxCurrentPerMppt / Imp);
         const maxStringsPerTrackerByIsc = Math.floor(maxIscPerMppt / Isc);
         const maxStringsPerTrackerEffective = Math.min(maxStringsPerTrackerByOperating, maxStringsPerTrackerByIsc, maxStringsPerTrackerPhysical);
         const maxStringsPerInverter = mpptTrackers * maxStringsPerTrackerEffective;
@@ -1524,7 +1690,8 @@
 
         return {
           groups, numGroups, totalStrings, actualModuleCount, actualDcKwp,
-          maxStringsPerTrackerEffective, maxStringsPerInverter, maxStringsSystemTotal, Isc, maxCurrentPerInput,
+          maxStringsPerTrackerEffective, maxStringsPerTrackerByOperating, maxStringsPerTrackerByIsc, maxStringsPerTrackerPhysical,
+          maxStringsPerInverter, maxStringsSystemTotal, Isc, Imp, maxCurrentPerInput, maxCurrentPerMppt, maxIscPerMppt,
           // backward-compatible single-value fields (group 1) so older display code keeps working
           modulesPerString: groups[0].modulesPerString, numStrings: totalStrings,
           VocCold: groups[0].VocCold, VmpHot: groups[0].VmpHot, VmpCold: groups[0].VmpCold,
@@ -1542,7 +1709,7 @@
         return { irr, qual, mismatch, ohmic, soiling, avail };
       }
 
-      async function computeOneFace(lat, lon, faceDcKwp, tilt, azimuth, tempCoeff, albedo, Uc) {
+      async function computeOneFace(lat, lon, faceDcKwp, tilt, azimuth, tempCoeff, albedo, Uc, rowShade) {
         const monthlyTotals = parseCsvNumbers(document.getElementById('manualGHI').value);
         const tempArr = parseCsvNumbers(document.getElementById('manualTemp').value);
         if (monthlyTotals.length < 12 || tempArr.length < 12) throw new Error('MANUAL_DATA_INCOMPLETE');
@@ -1550,7 +1717,7 @@
         // convert to daily average here since the physics engine below works in kWh/m²/day.
         const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
         const ghiArr = monthlyTotals.map((v, i) => v / daysInMonth[i]);
-        return buildFaceResult(ghiArr, tempArr, tilt, azimuth, lat, albedo, Uc, tempCoeff, faceDcKwp, false, 'Bức xạ/nhiệt độ theo tháng (PVGIS hoặc nhập tay)');
+        return buildFaceResult(ghiArr, tempArr, tilt, azimuth, lat, albedo, Uc, tempCoeff, faceDcKwp, false, 'Bức xạ/nhiệt độ theo tháng (PVGIS hoặc nhập tay)', rowShade);
       }
 
       // Estimates the IAM loss factor purely from geometry (tilt/azimuth/lat), independent of the
@@ -1591,23 +1758,23 @@
         return weights;
       }
 
-      function buildFaceResult(ghiArr, tempArr, tilt, azimuth, lat, albedo, Uc, tempCoeff, faceDcKwp, isAlreadyPOA, engineLabel) {
+      function buildFaceResult(ghiArr, tempArr, tilt, azimuth, lat, albedo, Uc, tempCoeff, faceDcKwp, isAlreadyPOA, engineLabel, rowShade) {
         const monthLabels = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
         const iamFactors = isAlreadyPOA ? estimateMonthlyIamFactors(tilt, azimuth, lat, albedo) : null;
-        let monthly = [], POA_y = 0, POAeff_y = 0, tempWeightedSum = 0, tempWeightSum = 0;
+        let monthly = [], POA_y = 0, POA_y_noShade = 0, POAeff_y = 0, tempWeightedSum = 0, tempWeightSum = 0;
         for (let i = 0; i < 12; i++) {
           const ghiDay = ghiArr[i] ?? ghiArr[ghiArr.length - 1] ?? 4.0;
           const tAmb = tempArr[i] ?? tempArr[tempArr.length - 1] ?? 25;
-          let POA, POA_eff, avgTempFactor, hourlyEff, ghiTotal = null, diffuseTotal = null;
+          let POA, POA_noShade, POA_eff, avgTempFactor, hourlyEff, ghiTotal = null, diffuseTotal = null;
           if (isAlreadyPOA) {
-            POA = ghiDay; POA_eff = ghiDay * iamFactors[i];
+            POA = ghiDay; POA_noShade = ghiDay; POA_eff = ghiDay * iamFactors[i];
             avgTempFactor = 1 + (tempCoeff / 100) * Math.max(0, (tAmb + ghiDay * 3) - 25);
             const weights = syntheticHourWeights(lat, tilt, azimuth, i);
             hourlyEff = weights.map(w => POA_eff * 1000 * w * avgTempFactor); // Wh/m2 per hour, synthetic shape
           } else {
-            const r = simulateFaceMonth(ghiDay, tAmb, tilt, azimuth, lat, albedo, Uc, tempCoeff, i);
-            POA = r.POA; POA_eff = r.POA_eff; avgTempFactor = r.avgTempFactor; hourlyEff = r.hourlyEff;
+            const r = simulateFaceMonth(ghiDay, tAmb, tilt, azimuth, lat, albedo, Uc, tempCoeff, i, rowShade);
+            POA = r.POA; POA_noShade = r.POA_noShade; POA_eff = r.POA_eff; avgTempFactor = r.avgTempFactor; hourlyEff = r.hourlyEff;
             // GHI/diffuse are site-level (independent of tilt/azimuth) — recomputed here from the
             // same Erbs clearness-index split used inside the physics engine, for the monthly table.
             const { H0 } = daylightAndH0(lat, MEAN_DAY_OF_YEAR[i]);
@@ -1616,13 +1783,13 @@
             ghiTotal = ghiDay * daysInMonth[i];
             diffuseTotal = ghiDay * fd * daysInMonth[i];
           }
-          const H_m = POA * daysInMonth[i], H_m_eff = POA_eff * daysInMonth[i];
-          monthly.push({ month: monthLabels[i], H_m, H_m_eff, avgTempFactor, hourlyEff, ghiTotal, diffuseTotal, tAmb });
-          POA_y += H_m; POAeff_y += H_m_eff;
+          const H_m = POA * daysInMonth[i], H_m_noShade = POA_noShade * daysInMonth[i], H_m_eff = POA_eff * daysInMonth[i];
+          monthly.push({ month: monthLabels[i], H_m, H_m_noShade, H_m_eff, avgTempFactor, hourlyEff, ghiTotal, diffuseTotal, tAmb });
+          POA_y += H_m; POA_y_noShade += H_m_noShade; POAeff_y += H_m_eff;
           tempWeightedSum += avgTempFactor * H_m_eff; tempWeightSum += H_m_eff;
         }
         const annualTempFactor = tempWeightSum > 0 ? tempWeightedSum / tempWeightSum : 1;
-        return { monthly, POA_y, POAeff_y, annualTempFactor, faceDcKwp, engine: engineLabel };
+        return { monthly, POA_y, POA_y_noShade, POAeff_y, annualTempFactor, faceDcKwp, engine: engineLabel };
       }
 
       // Entry point for the "Tính toán" button — warns via modal if the user never fetched
@@ -1645,34 +1812,87 @@
       }
 
       async function performCalculation() {
-        const lat = parseFloat(document.getElementById('lat').value);
-        const lon = parseFloat(document.getElementById('lon').value);
-        const albedo = parseFloat(document.getElementById('albedo').value) || 0.2;
-        const Uc = 20; // W/m2K, matches PVsyst default thermal loss factor
-        const tempCoeff = parseFloat(document.getElementById('tempCoeff').value);
-        const isTwoRoof = document.getElementById('roofMode').value === '2';
-        const lifetime = parseInt(document.getElementById('lifetime').value);
+        setStatus('⏳ Đang tính toán (quá trình có thể mất vài giây)…');
+        
+        // Cache ALL DOM values at once (avoid repeated DOM reads in loops)
+        const domValues = {
+          lat: parseFloat(document.getElementById('lat').value),
+          lon: parseFloat(document.getElementById('lon').value),
+          albedo: parseFloat(document.getElementById('albedo').value) || 0.2,
+          tempCoeff: parseFloat(document.getElementById('tempCoeff').value),
+          mountMode: document.getElementById('mountMode').value,
+          isTwoRoof: document.getElementById('mountMode').value !== 'farm' && document.getElementById('roofMode').value === '2',
+          farmModuleLength: parseFloat(document.getElementById('farmModuleLength').value) || 0,
+          farmPanelsSlope: Math.max(1, parseFloat(document.getElementById('farmPanelsSlope').value) || 1),
+          farmPitch: parseFloat(document.getElementById('farmPitch').value) || 0,
+          farmUc: parseFloat(document.getElementById('farmUc').value) || 29,
+          lifetime: parseInt(document.getElementById('lifetime').value),
+          inverterPower: parseFloat(document.getElementById('inverterPower').value),
+          inverterCount: parseFloat(document.getElementById('inverterCount').value),
+          tilt: parseFloat(document.getElementById('tilt').value),
+          azimuth: parseFloat(document.getElementById('azimuth').value),
+          tilt2: parseFloat(document.getElementById('tilt2').value),
+          azimuth2: parseFloat(document.getElementById('azimuth2').value),
+          roofRatio1: parseFloat(document.getElementById('roofRatio1').value),
+          bifacialGain: parseFloat(document.getElementById('bifacialGain').value) || 0,
+          lossMixedOrientation: parseFloat(document.getElementById('lossMixedOrientation').value) || 0,
+          weatherVariability: parseFloat(document.getElementById('weatherVariability').value) || 0,
+          uncModule: parseFloat(document.getElementById('uncModule').value) || 0,
+          uncInverter: parseFloat(document.getElementById('uncInverter').value) || 0,
+          uncSoilingMismatch: parseFloat(document.getElementById('uncSoilingMismatch').value) || 0,
+          uncDegradation: parseFloat(document.getElementById('uncDegradation').value) || 0,
+          degYear1: parseFloat(document.getElementById('degYear1').value),
+          degAnnual: parseFloat(document.getElementById('degAnnual').value),
+          dispersionRate: parseFloat(document.getElementById('dispersionRate').value),
+          projName: document.getElementById('projName').value,
+          moduleModel: document.getElementById('moduleModel').value,
+          inverterModel: document.getElementById('inverterModel').value,
+          tMinDesign: parseInt(document.getElementById('tMinDesign').value),
+          tMaxCellDesign: parseInt(document.getElementById('tMaxCellDesign').value),
+          inverterVmaxDC: parseInt(document.getElementById('inverterVmaxDC').value),
+          inverterMpptVmax: parseInt(document.getElementById('inverterMpptVmax').value),
+          inverterMpptVmin: parseInt(document.getElementById('inverterMpptVmin').value),
+          inverterMaxCurrentPerInput: parseInt(document.getElementById('inverterMaxCurrentPerInput').value),
+          inverterMpptTrackers: parseInt(document.getElementById('inverterMpptTrackers').value),
+          inverterMaxStringsPerTracker: parseInt(document.getElementById('inverterMaxStringsPerTracker').value),
+          inverterMaxCurrentPerMppt: parseInt(document.getElementById('inverterMaxCurrentPerMppt').value),
+          inverterMaxIscPerMppt: parseInt(document.getElementById('inverterMaxIscPerMppt').value),
+          inverterEff: parseFloat(document.getElementById('inverterEff').value)
+        };
+        
+        const { lat, lon, albedo, tempCoeff, isTwoRoof, lifetime, inverterPower, inverterCount, mountMode } = domValues;
+        const isFarm = mountMode === 'farm';
+        // Uc = PVsyst-style thermal loss factor. Roof racks sit close to a deck (limited airflow on
+        // the back) → 20 W/m²K ("semi-integrated" preset). Farm/ground-mount racking is free-standing
+        // and ventilated on both faces → runs cooler, so it defaults to PVsyst's "Free-standing" 29
+        // W/m²K unless the user overrides it with a measured value.
+        const Uc = isFarm ? domValues.farmUc : 20;
+        const acKw = inverterPower * inverterCount;
 
-        setStatus('Đang tính toán…');
+        // Row-to-row self-shading geometry (farm mode only) — Lc = slant height of one row
+        // (module length along the slope × how many panels are stacked up the slope), D = pitch
+        // (centre-to-centre row spacing). Passed through to the hourly physics engine so beam
+        // irradiance is reduced whenever the sun's profile angle falls below the shading-limit angle.
+        let rowShade = null;
+        if (isFarm) {
+          const farmLc = domValues.farmModuleLength * domValues.farmPanelsSlope;
+          if (farmLc > 0 && domValues.farmPitch > 0) rowShade = { Lc: farmLc, D: domValues.farmPitch };
+        }
 
         // 1) string design (independent of irradiance)
         const sd = validateStringDesign();
         if (!sd.ok) { setStatus('Cấu hình chuỗi không hợp lệ — xem cảnh báo chi tiết bên dưới.', 'err'); }
-
-        const inverterPower = parseFloat(document.getElementById('inverterPower').value);
-        const inverterCount = parseFloat(document.getElementById('inverterCount').value);
-        const acKw = inverterPower * inverterCount;
         const dcKwp = sd.actualDcKwp;
 
         let faces;
         if (isTwoRoof) {
-          const ratio1 = Math.min(100, Math.max(0, parseFloat(document.getElementById('roofRatio1').value) || 50)) / 100;
+          const ratio1 = Math.min(100, Math.max(0, domValues.roofRatio1 || 50)) / 100;
           faces = [
-            { tilt: parseFloat(document.getElementById('tilt').value), azimuth: parseFloat(document.getElementById('azimuth').value), ratio: ratio1 },
-            { tilt: parseFloat(document.getElementById('tilt2').value), azimuth: parseFloat(document.getElementById('azimuth2').value), ratio: 1 - ratio1 }
+            { tilt: domValues.tilt, azimuth: domValues.azimuth, ratio: ratio1 },
+            { tilt: domValues.tilt2, azimuth: domValues.azimuth2, ratio: 1 - ratio1 }
           ];
         } else {
-          faces = [{ tilt: parseFloat(document.getElementById('tilt').value), azimuth: parseFloat(document.getElementById('azimuth').value), ratio: 1 }];
+          faces = [{ tilt: domValues.tilt, azimuth: domValues.azimuth, ratio: 1 }];
         }
 
         const monthLabels = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -1682,19 +1902,19 @@
         // BEFORE static DC losses (irradiance-level/quality/mismatch/ohmic/soiling) and BEFORE inverter —
         // summed across roof faces (each face contributes its own dcKwp × that face's hourly irradiance shape).
         let combinedHourlyPowerSTC = Array.from({ length: 12 }, () => new Array(24).fill(0));
-        let POA_y = 0, POAeff_y = 0, engines = [];
-        const bifacialGain = parseFloat(document.getElementById('bifacialGain').value) || 0;
-        const bifacialFactor = 1 + bifacialGain / 100;
+        let POA_y = 0, POA_y_noShade = 0, POAeff_y = 0, engines = [];
+        const bifacialFactor = 1 + domValues.bifacialGain / 100;
+        setStatus('⏳ Đang tính toán mặt 1/' + faces.length + '…');
 
         for (const face of faces) {
           const faceDcKwp = dcKwp * face.ratio;
           if (faceDcKwp <= 0) continue;
           let result;
           try {
-            result = await computeOneFace(lat, lon, faceDcKwp, face.tilt, face.azimuth, tempCoeff, albedo, Uc);
+            result = await computeOneFace(lat, lon, faceDcKwp, face.tilt, face.azimuth, tempCoeff, albedo, Uc, rowShade);
           } catch (e) {
             if (e.message === 'MANUAL_DATA_INCOMPLETE') {
-              setStatus('Cần đủ 12 giá trị bức xạ và nhiệt độ.', 'err'); setEngineBadge('THIẾU DỮ LIỆU');
+              setStatus('Cần đủ 12 giá trị bức xạ và nhiệt độ.', 'err');
             }
             return;
           }
@@ -1709,15 +1929,20 @@
             }
           });
           POA_y += result.POA_y * face.ratio;
+          POA_y_noShade += result.POA_y_noShade * face.ratio;
           POAeff_y += result.POAeff_y * face.ratio;
         }
-        const engine = [...new Set(engines)].join(' + ');
-        setEngineBadge(engine.split(' ')[0]);
+        // Annual row-to-row self-shading loss (farm mode only) — informational figure comparing
+        // GlobInc with vs. without the row-shading reduction; already baked into POA_y/POAeff_y
+        // above (and therefore into every downstream energy figure), NOT an extra multiplier.
+        const selfShadingLossPct = (isFarm && POA_y_noShade > 0) ? Math.max(0, (1 - POA_y / POA_y_noShade) * 100) : 0;
 
+        setStatus('⏳ Đang tính toán tổn hao…');
+        
         // 2) apply the detailed PVsyst-style loss cascade
         const L = sumLossPctExceptTemp();
         const inverterEff = parseFloat(document.getElementById('inverterEff').value) / 100;
-        const mixedOrient = isTwoRoof ? (parseFloat(document.getElementById('lossMixedOrientation').value) || 0) : 0;
+        const mixedOrient = isTwoRoof ? domValues.lossMixedOrientation : 0;
 
         const arrayNominal_y = POAeff_y * dcKwp * bifacialFactor; // kWh, "Array nominal energy (at STC effic.)" — includes bifacial rear-side gain if set
         const afterIrradiance = arrayNominal_y * (1 - L.irr / 100);
@@ -1780,20 +2005,16 @@
         const PR = (E_y / (dcKwp * POA_y)) * 100;
 
         // 3) uncertainty / P50-P90-P95 (quadratic sum, same methodology PVsyst uses)
-        const weatherVar = parseFloat(document.getElementById('weatherVariability').value) || 0;
-        const uncModule = parseFloat(document.getElementById('uncModule').value) || 0;
-        const uncInverter = parseFloat(document.getElementById('uncInverter').value) || 0;
-        const uncSoilMis = parseFloat(document.getElementById('uncSoilingMismatch').value) || 0;
-        const uncDeg = parseFloat(document.getElementById('uncDegradation').value) || 0;
-        const sigma = Math.sqrt(weatherVar ** 2 + uncModule ** 2 + uncInverter ** 2 + uncSoilMis ** 2 + uncDeg ** 2);
+        const { weatherVariability, uncModule, uncInverter, uncSoilingMismatch, uncDegradation } = domValues;
+        const sigma = Math.sqrt(weatherVariability ** 2 + uncModule ** 2 + uncInverter ** 2 + uncSoilingMismatch ** 2 + uncDegradation ** 2);
         const P50 = E_y, P90 = E_y * (1 - 1.2816 * sigma / 100), P95 = E_y * (1 - 1.645 * sigma / 100);
         const variabilityMWh = sigma / 100 * E_y;
 
+        setStatus('⏳ Đang tính toán suy giảm 25 năm…');
+        
         // 4) 25-year ageing table — two-stage model matching how manufacturers publish it
         // (a distinct year-1 drop, then a steady annual rate), e.g. Trina Vertex N G3: 1% year-1 + 0.35%/year.
-        const degYear1 = parseFloat(document.getElementById('degYear1').value);
-        const degAnnual = parseFloat(document.getElementById('degAnnual').value);
-        const dispersionRate = parseFloat(document.getElementById('dispersionRate').value);
+        const { degYear1, degAnnual, dispersionRate } = domValues;
         let yearsTable = [];
         for (let y = 1; y <= lifetime; y++) {
           const degLoss = (y === 1) ? degYear1 / 2 : degYear1 + degAnnual * (y - 1.5); // mid-year convention within each stage
@@ -1802,18 +2023,25 @@
           yearsTable.push({ year: y, lossPct: totalLoss, EUseful: P50 * (1 - totalLoss / 100), PR: PR * (1 - totalLoss / 100) });
         }
 
+        setStatus('⏳ Đang render kết quả…');
+        const engine = engines.length > 0 ? engines.join(' + ') : 'Không xác định';
+        
+        // Defer rendering to next frame to keep UI responsive
+        await new Promise(resolve => setTimeout(resolve, 0));
+        
         renderResults({
-          projName: document.getElementById('projName').value,
+          projName: domValues.projName,
           lat, lon, dcKwp, acKw, dcAcRatio: dcKwp / acKw, isTwoRoof, engine,
-          moduleModel: document.getElementById('moduleModel').value,
-          inverterModel: document.getElementById('inverterModel').value,
-          sd, monthly: monthlyDisplay, monthlyBalances, POA_y, POAeff_y, bifacialGain,
+          mountMode, isFarm, rowShade, Uc, selfShadingLossPct, POA_y_noShade,
+          moduleModel: domValues.moduleModel,
+          inverterModel: domValues.inverterModel,
+          sd, monthly: monthlyDisplay, monthlyBalances, POA_y, POAeff_y, bifacialGain: domValues.bifacialGain,
           arrayNominal_y, afterIrradiance, afterTemp, afterQuality, afterMismatch, afterOhmic, afterMixedOrient, afterSoiling, afterInverter, afterClipping, clippingLossPct, E_y,
           L, mixedOrient, annualTempFactor, inverterEff,
           specificYield, PR, P50, P90, P95, sigma, variabilityMWh,
-          yearsTable, lifetime
+          yearsTable, lifetime, domValues
         });
-        setStatus('Tính toán hoàn tất. Nguồn: ' + engine, 'ok');
+        setStatus('✓ Tính toán hoàn tất. Nguồn: ' + engine, 'ok');
       }
     </script>
     <script>
@@ -1829,6 +2057,8 @@
       <div class="card cyan"><div class="label">Performance Ratio</div><div class="value">${fmt(r.PR, 2)}<span>%</span></div></div>
       <div class="card"><div class="label">Sản lượng <span class="p-tag p50">P50</span></div><div class="value">${fmt(r.E_y, 0)}<span>kWh</span></div></div>
       <div class="card cyan"><div class="label">Sản lượng <span class="p-tag p90">P90</span></div><div class="value">${fmt(r.P90, 0)}<span>kWh</span></div><div class="sub">σ tổng hợp ${fmt(r.sigma, 1)}%</div></div>
+      ${r.isFarm ? `<div class="card"><div class="label">GCR giàn (Lc/pitch)</div><div class="value">${r.rowShade ? fmt(r.rowShade.Lc / r.rowShade.D * 100, 1) : '—'}<span>%</span></div><div class="sub">Lc ${r.rowShade ? fmt(r.rowShade.Lc, 2) : '—'}m · pitch ${r.rowShade ? fmt(r.rowShade.D, 2) : '—'}m · Uc ${fmt(r.Uc, 0)} W/m²K</div></div>` : ''}
+      ${r.isFarm ? `<div class="card cyan"><div class="label">Tổn hao tự bóng hàng-hàng</div><div class="value">${fmt(r.selfShadingLossPct, 2)}<span>%</span></div><div class="sub">theo GlobInc năm, đã tính trong sản lượng</div></div>` : ''}
     </div>
 
     <div class="panel-block">
@@ -1838,12 +2068,15 @@
         <tbody>
           ${r.sd.groups.map((g) => `
           ${r.sd.numGroups > 1 ? `<tr><td colspan="2" style="background:var(--panel-2); color:var(--amber);"><b>Nhóm ${g.index}: ${g.modulesPerString} tấm/chuỗi × ${g.numStrings} chuỗi = ${fmt(g.dcKwp, 1)} kWp</b></td></tr>` : ''}
-          <tr><td>Voc chuỗi ở nhiệt độ thấp nhất (${document.getElementById('tMinDesign').value}°C)</td><td>${fmt(g.VocCold, 0)} V${g.VocCold > parseFloat(document.getElementById('inverterVmaxDC').value) ? ' ⚠' : ' ✓'} (giới hạn ${document.getElementById('inverterVmaxDC').value} V)</td></tr>
-          <tr><td>Vmp chuỗi ở nhiệt độ thấp nhất (Vmp lạnh nhất)</td><td>${fmt(g.VmpCold, 0)} V${g.VmpCold > parseFloat(document.getElementById('inverterMpptVmax').value) ? ' ⚠' : ' ✓'} (giới hạn MPPT max ${document.getElementById('inverterMpptVmax').value} V)</td></tr>
-          <tr><td>Vmp chuỗi ở nhiệt độ tấm nóng nhất (${document.getElementById('tMaxCellDesign').value}°C)</td><td>${fmt(g.VmpHot, 0)} V${g.VmpHot < parseFloat(document.getElementById('inverterMpptVmin').value) ? ' ⚠' : ' ✓'} (giới hạn MPPT min ${document.getElementById('inverterMpptVmin').value} V)</td></tr>
+          <tr><td>Voc chuỗi ở nhiệt độ thấp nhất (${r.domValues.tMinDesign}°C)</td><td>${fmt(g.VocCold, 0)} V${g.VocCold > r.domValues.inverterVmaxDC ? ' ⚠' : ' ✓'} (giới hạn ${r.domValues.inverterVmaxDC} V)</td></tr>
+          <tr><td>Vmp chuỗi ở nhiệt độ thấp nhất (Vmp lạnh nhất)</td><td>${fmt(g.VmpCold, 0)} V${g.VmpCold > r.domValues.inverterMpptVmax ? ' ⚠' : ' ✓'} (giới hạn MPPT max ${r.domValues.inverterMpptVmax} V)</td></tr>
+          <tr><td>Vmp chuỗi ở nhiệt độ tấm nóng nhất (${r.domValues.tMaxCellDesign}°C)</td><td>${fmt(g.VmpHot, 0)} V${g.VmpHot < r.domValues.inverterMpptVmin ? ' ⚠' : ' ✓'} (giới hạn MPPT min ${r.domValues.inverterMpptVmin} V)</td></tr>
           `).join('')}
           <tr><td>Isc module so với dòng tối đa/1 đầu vào</td><td>${isNaN(r.sd.maxCurrentPerInput) ? fmt(r.sd.Isc, 1) + ' A (chưa có dữ liệu dòng tối đa/1 đầu vào — bỏ qua kiểm tra này)' : fmt(r.sd.Isc, 1) + ' A' + (r.sd.Isc > r.sd.maxCurrentPerInput ? ' ⚠' : ' ✓') + ' (giới hạn ' + r.sd.maxCurrentPerInput + ' A)'}</td></tr>
-          <tr><td>Số chuỗi tối đa/tracker (theo dòng &amp; datasheet)</td><td>${r.sd.maxStringsPerTrackerEffective}</td></tr>
+          <tr><td style="padding-left:16px; color:#5c6f82;">↳ theo dòng vận hành/MPPT (Imp×n ≤ ${r.sd.maxCurrentPerMppt}A)</td><td style="color:#5c6f82;">floor(${r.sd.maxCurrentPerMppt}÷${fmt(r.sd.Imp, 2)}) = ${r.sd.maxStringsPerTrackerByOperating}</td></tr>
+          <tr><td style="padding-left:16px; color:#5c6f82;">↳ theo dòng ngắn mạch/MPPT (Isc×n ≤ ${r.sd.maxIscPerMppt}A)</td><td style="color:#5c6f82;">floor(${r.sd.maxIscPerMppt}÷${fmt(r.sd.Isc, 2)}) = ${r.sd.maxStringsPerTrackerByIsc}</td></tr>
+          <tr><td style="padding-left:16px; color:#5c6f82;">↳ theo số đầu vào vật lý/tracker (datasheet)</td><td style="color:#5c6f82;">${r.sd.maxStringsPerTrackerPhysical}</td></tr>
+          <tr><td>Số chuỗi tối đa/tracker (nhỏ nhất trong 3 ở trên)</td><td>${r.sd.maxStringsPerTrackerEffective}</td></tr>
           <tr><td>Số chuỗi tối đa/bộ inverter</td><td>${r.sd.maxStringsPerInverter}</td></tr>
           <tr class="year1"><td><b>Số chuỗi tối đa toàn hệ thống</b></td><td><b>${r.sd.maxStringsSystemTotal}</b></td>${r.sd.totalStrings > r.sd.maxStringsSystemTotal ? ' ⚠' : ' ✓'}</tr>
           <tr class="year1"><td><b>Công suất DC thực tế</b></td><td><b>${fmt(r.sd.actualDcKwp, 1)} kWp</b></td></tr>
@@ -1899,11 +2132,11 @@
       <div class="two-col">
         <table>
           <tbody>
-            <tr><td>Biến động bức xạ liên năm</td><td>${document.getElementById('weatherVariability').value}%</td></tr>
-            <tr><td>Bất định mô hình module</td><td>${document.getElementById('uncModule').value}%</td></tr>
-            <tr><td>Bất định hiệu suất inverter</td><td>${document.getElementById('uncInverter').value}%</td></tr>
-            <tr><td>Bất định bụi/mismatch</td><td>${document.getElementById('uncSoilingMismatch').value}%</td></tr>
-            <tr><td>Bất định suy giảm</td><td>${document.getElementById('uncDegradation').value}%</td></tr>
+            <tr><td>Biến động bức xạ liên năm</td><td>${r.domValues.weatherVariability}%</td></tr>
+            <tr><td>Bất định mô hình module</td><td>${r.domValues.uncModule}%</td></tr>
+            <tr><td>Bất định hiệu suất inverter</td><td>${r.domValues.uncInverter}%</td></tr>
+            <tr><td>Bất định bụi/mismatch</td><td>${r.domValues.uncSoilingMismatch}%</td></tr>
+            <tr><td>Bất định suy giảm</td><td>${r.domValues.uncDegradation}%</td></tr>
             <tr class="year1"><td><b>Biến động tổng hợp (căn quân phương)</b></td><td><b>${fmt(r.sigma, 2)}%</b></td></tr>
           </tbody>
         </table>
@@ -1923,9 +2156,10 @@
       <h3>Ghi chú phương pháp &amp; giới hạn</h3>
       <div class="footnote">
         <b>Nguồn dữ liệu:</b> ${r.engine}${r.isTwoRoof ? ' (tính riêng từng mái, cộng sản lượng)' : ''}.<br>
+        <b>Phương thức lắp đặt:</b> ${r.isFarm ? `Mặt đất — hệ farm (khung giàn cố định). Tự bóng hàng-hàng tính đầy đủ theo giờ/tháng bằng công thức góc giới hạn che bóng (Duffie &amp; Beckman) dựa trên GCR thực (Lc/pitch = ${r.rowShade ? fmt(r.rowShade.Lc / r.rowShade.D * 100, 1) : '—'}%); chỉ áp dụng cho phần trực xạ (beam), khuếch tán/phản xạ mặt đất không bị trừ thêm. Mô hình giả định các hàng chạy dài, vuông góc với mặt phẳng nghiêng-hướng của giàn (bố trí giàn tiêu chuẩn) — không mô phỏng 3D che khuất ở hai đầu hàng hoặc vật cản riêng lẻ (cây, cột, trạm biến áp...).` : 'Mái tôn (rooftop) — không mô hình tự bóng hàng-hàng.'}<br>
         <b>Bức xạ nghiêng &amp; IAM:</b> mô phỏng giờ-theo-giờ (24h × 12 tháng) — góc tới thực tế (AOI), hệ số khuếch tán Erbs, mô hình Liu-Jordan, và IAM tra theo đúng bảng Fresnel+AR (n=1.526/1.290) mà PVsyst in trong báo cáo. Đã đối chiếu với 3 báo cáo PVsyst thực tế của bạn: GlobInc/GlobEff sai lệch 0,1–0,3%, sản lượng cuối sai lệch &lt;1%.<br>
         <b>Cột DiffHor (bảng Balances):</b> hệ số khuếch tán Erbs đôi khi ước tính cao hơn số liệu Meteonorm thực tế vào các tháng nhiều mây/độ trong khí quyển thấp (đã đối chiếu: có tháng lệch tới ~20 điểm % so với DiffHor thật của PVsyst) — do đây là tương quan thống kê chung, không phải đo đạc trực tiếp. GlobInc/GlobEff/PR/E_Grid không bị ảnh hưởng đáng kể (vẫn trong sai số &lt;1% đã kiểm chứng), chỉ riêng việc TÁCH beam/diffuse là kém chính xác hơn.<br>
-        <b>Tổn hao nhiệt độ:</b> tính từ nhiệt độ tế bào theo giờ (Tcell=Tamb+G<sub>poa</sub>/Uc, Uc=20 W/m²K giống mặc định PVsyst), lấy trung bình có trọng số theo năng lượng.<br>
+        <b>Tổn hao nhiệt độ:</b> tính từ nhiệt độ tế bào theo giờ (Tcell=Tamb+G<sub>poa</sub>/Uc, Uc=${fmt(r.Uc, 0)} W/m²K — ${r.isFarm ? 'preset "Free-standing" PVsyst cho giàn mặt đất thoáng khí' : 'preset "Semi-integrated" PVsyst cho mái tôn, mặc định'}), lấy trung bình có trọng số theo năng lượng.<br>
         <b>Clipping (cắt ngọn DC/AC):</b> dùng lại đúng hồ sơ công suất theo giờ đã mô phỏng (không phải ước lượng thống kê) — mỗi giờ trong năm, công suất DC sau tổn hao được so với công suất AC tối đa của inverter; phần vượt bị cắt bỏ. Ở chế độ nhập POA (không có hình dạng giờ thật), công cụ dựng hình dạng giờ mô phỏng theo vị trí mặt trời để ước tính gần đúng.<br>
         <b>Ageing 25 năm:</b> mô hình suy giảm tuyến tính bình quân năm (quy ước giữa-năm) + tổn hao mismatch tăng theo bình phương độ phân tán Imp/Vmp. Số liệu Ageing Tool thực tế của PVsyst còn lồng thêm biến động thời tiết theo từng năm cụ thể trong bộ dữ liệu nhiều năm của họ (ghi chú "interpolated data" trong báo cáo) — điều này tạo ra đường cong gợn sóng mà mô hình khí hậu trung bình tháng ở đây không tái tạo được chính xác từng năm, dù tổng xu hướng 25 năm là tương đồng.<br>
         <b>P50/P90:</b> tổng hợp căn quân phương giữa biến động bức xạ liên năm và các bất định mô hình/thiết bị — đúng phương pháp PVsyst dùng.<br>
@@ -2090,6 +2324,10 @@
         const iamPct = (1 - (r.POAeff_y / r.POA_y)) * 100;
 
         const irradRows = [
+          ...(r.isFarm && r.selfShadingLossPct > 0.01 ? [
+            { type: 'box', value: r.POA_y_noShade, unit: 'kWh/m²', label: 'Global incident (chưa trừ tự bóng hàng-hàng)' },
+            { type: 'loss', pct: r.selfShadingLossPct, label: 'Tự bóng hàng-hàng (row-to-row self-shading)' },
+          ] : []),
           { type: 'box', value: r.POA_y, unit: 'kWh/m²', label: 'Global incident in coll. plane' },
           { type: 'loss', pct: iamPct, label: 'IAM factor (Fresnel+AR)' },
           { type: 'box', value: r.POAeff_y, unit: 'kWh/m²', label: 'Effective irradiation on collectors' },

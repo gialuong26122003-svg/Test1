@@ -49,7 +49,7 @@ export async function GET(request) {
     
     // We use AbortController since fetch doesn't have timeout built-in
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // Increased from 15s to 30s
     
     const pvgisRes = await fetch(pvgisUrl, {
       next: { revalidate: 86400 }, // Cache for 24 hours
@@ -79,7 +79,7 @@ export async function GET(request) {
       console.log(`[API] Fetching NASA: ${nasaUrl}`);
       
       const nasaController = new AbortController();
-      const nasaTimeoutId = setTimeout(() => nasaController.abort(), 15000);
+      const nasaTimeoutId = setTimeout(() => nasaController.abort(), 30000); // Increased from 15s to 30s
       
       const nasaRes = await fetch(nasaUrl, {
         next: { revalidate: 86400 }, // Cache for 24 hours
