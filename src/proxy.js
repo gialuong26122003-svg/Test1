@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { computeAuthToken, AUTH_COOKIE_NAME } from '@/lib/authToken';
+import { verifySessionToken, AUTH_COOKIE_NAME } from '@/lib/authToken';
+import { findUser } from '@/lib/users';
 
 export const config = {
   matcher: ['/index.html', '/js/:path*', '/css/:path*'],
@@ -12,8 +13,10 @@ export async function proxy(request) {
   }
 
   const cookie = request.cookies.get(AUTH_COOKIE_NAME)?.value;
-  const expected = await computeAuthToken(secret);
-  if (cookie === expected) {
+  const session = await verifySessionToken(secret, cookie);
+  const user = session ? findUser(session.username) : null;
+
+  if (user && user.active !== false) {
     return NextResponse.next();
   }
 
